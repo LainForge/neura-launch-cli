@@ -1,5 +1,5 @@
 import argparse
-from utils import init_nl, add_token
+from app.utils import init_nl, add_token
 
 
 def main():
@@ -25,4 +25,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())
