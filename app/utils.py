@@ -3,6 +3,9 @@ import os
 import getpass
 import keyring
 import yaml
+import requests
+
+BACKEND_SERVER_URL = "http://localhost:4040/upload"
 
 
 def init_nl(args):
@@ -54,3 +57,42 @@ def add_token(args):
     keyring.set_password(existing_data['project_name'], "project_token", token)
 
     print("added secret token for the project")
+
+
+def upload_code(args):
+    existing_data = {}
+
+    with open('config.yaml', 'r') as yaml_file:
+        # Initialize as an empty dictionary if the file is empty
+        existing_data = yaml.safe_load(yaml_file) or {}
+
+    if 'project_name' not in existing_data:
+        print("project_name key not found in config.yaml!")
+        return
+
+    if 'inference_file' not in existing_data:
+        print("inference_file key not found in config.yaml!")
+        return
+
+    # make a zip file of all the files in the root directory and save it in the current directory
+    shutil.make_archive(existing_data['project_name'], 'zip', os.getcwd())
+
+    # upload the code to the server by making a POST request to the server with the zip file and the secret token
+    files = {'file': open(existing_data['project_name'] + '.zip', 'rb')}
+    token = keyring.get_password(
+        existing_data['project_name'], "project_token")
+
+    if token is None:
+        print("project token not found!")
+        return
+
+    response = requests.post(
+        BACKEND_SERVER_URL, files=files)
+
+    if response.status_code == 200:
+        print("Code uploaded successfully!")
+    else:
+        print("Error uploading code!")
+
+    # delete the zip file
+    os.remove(existing_data['project_name'] + '.zip')
