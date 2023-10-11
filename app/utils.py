@@ -5,7 +5,7 @@ import keyring
 import yaml
 import requests
 
-BACKEND_SERVER_URL = "http://localhost:4040/upload"
+BACKEND_SERVER_URL = "http://localhost:8080/upload"
 
 
 def init_nl(args):
