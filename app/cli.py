@@ -1,5 +1,5 @@
 import argparse
-from app.utils import init_nl, add_token
+from app.utils import init_nl, add_token, upload_code
 
 
 def main():
@@ -20,9 +20,14 @@ def main():
     )
     token_parser.set_defaults(func=add_token)
 
+    # create a zip for the code and upload it to the server
+    upload_parser = sub_parser.add_parser(
+        "push", help="Push the local code to cloud server")
+    upload_parser.set_defaults(func=upload_code)
+
     args = parser.parse_args()
     args.func(args)
 
 
 if __name__ == "__main__":
-    exit(main())
+    main()
