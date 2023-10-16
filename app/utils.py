@@ -74,17 +74,18 @@ def upload_code(args):
         print("inference_file key not found in config.yaml!")
         return
 
-    # make a zip file of all the files in the root directory and save it in the current directory
-    shutil.make_archive(existing_data['project_name'], 'zip', os.getcwd())
-
-    # upload the code to the server by making a POST request to the server with the zip file and the secret token
-    files = {'file': open(existing_data['project_name'] + '.zip', 'rb')}
     token = keyring.get_password(
         existing_data['project_name'], "project_token")
 
     if token is None:
         print("project token not found!")
         return
+
+    # make a zip file of all the files in the root directory and save it in the current directory
+    shutil.make_archive(token, 'zip', os.getcwd())
+
+    # upload the code to the server by making a POST request to the server with the zip file
+    files = {'file': open(token + '.zip', 'rb')}
 
     response = requests.post(
         BACKEND_SERVER_URL, files=files)
