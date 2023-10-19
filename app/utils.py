@@ -4,6 +4,7 @@ import getpass
 import keyring
 import yaml
 import requests
+import hashlib
 
 BACKEND_SERVER_URL = "http://localhost:8080/upload"
 
@@ -74,11 +75,6 @@ def upload_code(args):
         print("inference_file key not found in config.yaml!")
         return
 
-    # make a zip file of all the files in the root directory and save it in the current directory
-    shutil.make_archive(existing_data['project_name'], 'zip', os.getcwd())
-
-    # upload the code to the server by making a POST request to the server with the zip file and the secret token
-    files = {'file': open(existing_data['project_name'] + '.zip', 'rb')}
     token = keyring.get_password(
         existing_data['project_name'], "project_token")
 
@@ -86,13 +82,29 @@ def upload_code(args):
         print("project token not found!")
         return
 
+    # make a zip file of all the files in the root directory and save it in the current directory
+    shutil.make_archive(token, 'zip', os.getcwd())
+
+    # Generate a sha256 hash of the zip file
+    sha256_hash = hashlib.sha256()
+    with open(token + '.zip', "rb") as f:
+        # Read and update hash string value in blocks of 4K
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+
+    # upload the code to the server by making a POST request to the server with the zip file and the checksum
+    files = {
+        'file': (token + '.zip', open(token + '.zip', 'rb')),
+        'checksum': (None, sha256_hash.hexdigest())
+    }
+
     response = requests.post(
         BACKEND_SERVER_URL, files=files)
 
     if response.status_code == 200:
         print("Code uploaded successfully!")
     else:
-        print("Error uploading code!")
+        print("Error uploading code!", response.text)
 
     # delete the zip file
-    os.remove(existing_data['project_name'] + '.zip')
+    os.remove(token + '.zip')
